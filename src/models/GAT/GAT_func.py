@@ -78,6 +78,18 @@ def train_one_epoch(
 	device: torch.device,
 	use_edge_attr: bool,
 ) -> float:
+	"""
+	Train the model for one epoch and compute the average loss.
+	Args:
+		model: The GNN model to train
+		loader: DataLoader for training data
+		optimizer: Optimizer for updating model parameters
+		criterion: Loss function to compute training loss
+		device: Computation device (CPU or GPU)
+		use_edge_attr: Whether to use edge attributes during training
+	Returns:
+		Average training loss for the epoch
+	"""
 	model.train()
 	total_loss = 0.0
 	for data in loader:
@@ -98,6 +110,18 @@ def evaluate(
 	device: torch.device,
 	use_edge_attr: bool,
 ):
+	"""
+	Evaluate the model on the given data loader and compute loss, AUC-PR, and AUC-ROC.
+
+	Args:
+	model: Trained model to evaluate
+	loader: DataLoader for evaluation data
+	criterion: Loss function to compute average loss
+	device: Computation device (CPU or GPU)
+	use_edge_attr: Whether to use edge attributes during evaluation
+	Returns:
+	Average loss, AUC-PR, and AUC-ROC
+	"""
 	from sklearn.metrics import average_precision_score, roc_auc_score
 	model.eval()
 	total_loss = 0.0
@@ -123,6 +147,11 @@ def evaluate(
 
 
 def infer_edge_dim(dataset) -> Optional[int]:
+	"""
+	Infers the edge attribute dimension from the dataset.
+	Returns:
+		edge_dim (int): The dimension of edge attributes, or None if not found.
+	"""
 	for data in dataset:
 		if hasattr(data, "edge_attr") and data.edge_attr is not None:
 			if data.edge_attr.dim() == 1:
@@ -137,6 +166,7 @@ def train_n_epochs(
 	val_loader: DataLoader,
 	optimizer: torch.optim.Optimizer,
 	criterion: torch.nn.Module,
+	name_model: str,
 	device: torch.device,
 	use_edge_attr: bool,
 	n_epochs: int,
@@ -151,7 +181,7 @@ def train_n_epochs(
 	# Create log file if specified
 	if log_file is None:
 		import datetime
-		log_file = f"training_log_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+		log_file = f"training_log_{name_model}.txt"
 	
 	with open(log_file, 'w') as f:
 		f.write("Epoch,Patience,Train_Loss,Val_Loss,Train_AUC_PR,Val_AUC_PR\n")
@@ -161,9 +191,17 @@ def train_n_epochs(
 		train_eval_loss, train_auc_pr, train_auc_roc = evaluate(model, train_loader, criterion, device, use_edge_attr)
 		val_loss, val_auc_pr, val_auc_roc = evaluate(model, val_loader, criterion, device, use_edge_attr)
 
+		# Early stopping check based on validation AUC-PR
 		if np.isfinite(val_auc_pr) and val_auc_pr > best_ap:
 			best_ap = val_auc_pr
 			best_model_state = model.state_dict()
+			current_patience = patience  # Reset patience on improvement
+		else:
+			current_patience -= 1
+			if current_patience == 0:
+				print("Early stopping triggered.")
+				return best_model_state
+		
 		if val_loss < best_loss:
 			best_loss = val_loss
 
@@ -177,15 +215,6 @@ def train_n_epochs(
 			f"Val Loss: {val_loss:.4f} | Val AP: {val_auc_pr:.4f} | "
 			f"patience: {patience - current_patience} / {patience}"
 		)
-
-		# Early stopping check
-		if val_loss < best_loss and val_auc_pr < best_ap:
-			current_patience -= 1
-			if current_patience == 0:
-				print("Early stopping triggered.")
-				return best_model_state
-		else:
-			current_patience = patience
 	return best_model_state
 
 

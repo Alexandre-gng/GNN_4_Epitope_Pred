@@ -68,7 +68,6 @@ class GATv2Layer(torch.nn.Module):
             
         else:
             out, (edge_index_out, attn) = self.conv(x, edge_index, return_attention_weights=True)
-        
         out = self.dropout(out)
 
         if self.residual:
