@@ -1,4 +1,13 @@
-data/
+data/embeddings
+data/graph_lists
+data/pdb_structures
+data/db_epitopes.db
+data/explo.ipynb
+
+data/epitope3d/embeddings
+data/epitope3d/pdb_structure
+data/epitope3d/graph_list
+data/epitope3d/README.md
 
 config
 venv
@@ -12,3 +21,4 @@ __pycache__/
 *.pth
 *.db
 *.txt
+*.gitignore
