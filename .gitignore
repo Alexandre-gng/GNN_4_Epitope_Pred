@@ -9,10 +9,16 @@ data/epitope3d/pdb_structure
 data/epitope3d/graph_list
 data/epitope3d/README.md
 
+
+src/mlruns
+src/models/trained_model
+
+
 config
 venv
-.vscode/
 
+
+.vscode/
 __pycache__/
 *.pyc
 .env

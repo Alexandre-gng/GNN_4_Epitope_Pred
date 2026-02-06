@@ -83,20 +83,28 @@ def apply_knn_to_graphs(data_list, k, include_self=False, device=None):
                 edge_attr.append([dist])
         
         # Convertir en tensors PyTorch
+        # Important: Créer les tenseurs sur CPU pour garantir la compatibilité
+        # Les données seront transférées vers le device approprié par le DataLoader
         if len(edge_index) > 0:
-            edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous()
-            edge_attr = torch.tensor(edge_attr, dtype=torch.float32)
+            edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous().cpu()
+            edge_attr = torch.tensor(edge_attr, dtype=torch.float32).cpu()
         else:
             edge_index = torch.zeros((2, 0), dtype=torch.long)
             edge_attr = torch.zeros((0, 1), dtype=torch.float32)
         
+        # S'assurer que tous les attributs sont sur CPU pour la cohérence
+        # Le DataLoader s'occupera de les transférer vers le device approprié
+        x_cpu = data.x.cpu() if torch.is_tensor(data.x) else data.x
+        y_cpu = data.y.cpu() if torch.is_tensor(data.y) else data.y
+        pos_cpu = data.pos.cpu() if torch.is_tensor(data.pos) else data.pos
+        
         # Créer une nouvelle structure Data avec les nouveaux edges
         new_data = Data(
-            x=data.x,
+            x=x_cpu,
             edge_index=edge_index,
             edge_attr=edge_attr,
-            y=data.y,
-            pos=data.pos,
+            y=y_cpu,
+            pos=pos_cpu,
             rsa=data.rsa if hasattr(data, 'rsa') else None,
             name=data.name if hasattr(data, 'name') else None
         )
