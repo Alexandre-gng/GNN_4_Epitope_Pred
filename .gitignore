@@ -4,15 +4,15 @@ data/pdb_structures
 data/db_epitopes.db
 data/explo.ipynb
 
-data/epitope3d/embeddings
-data/epitope3d/pdb_structure
-data/epitope3d/graph_list
+data/epitope3d/embeddings/
+data/epitope3d/pdb_structure/
 data/epitope3d/README.md
 
 
 src/mlruns
 src/models/trained_model
-
+src/feature_generation/adapt_original_ds/
+src/data/
 
 config
 venv
@@ -20,11 +20,17 @@ venv
 
 .vscode/
 __pycache__/
-*.pyc
-.env
 
 
+*.pt
 *.pth
 *.db
 *.txt
 *.gitignore
+*.csv
+*.pkl
+*.log
+*.pyc
+*.env
+
+.gitignore

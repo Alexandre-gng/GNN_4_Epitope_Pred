@@ -63,13 +63,18 @@ class ProteinGraphBuilder:
         # Add label y. A epitope classification for each residue (node)
         y_label = torch.tensor(self.df['epitope'].values, dtype=torch.long, device=device)
         node_positions = coords
+        
+        # Determine num_nodes from embeddings
+        num_nodes = self.embeddings.shape[0]
+        
         # Create the graph data object with all components
         self.graph = Data(
-            x=self.embeddings.float(),
+            node_attrs=self.embeddings.float(),
             edge_index=edge_index,
             edge_attr=edge_attr,
             y=y_label,
-            pos=node_positions,
+            coords=node_positions,
+            num_nodes=num_nodes,
             global_feat=global_features
         )
         return self.graph
@@ -77,12 +82,12 @@ class ProteinGraphBuilder:
 
     def get_graph(self, highlight_epitopes=False, title=None):
         # Check if the graph has been created and has necessary attributes
-        if self.graph is None or not all(attr in self.graph for attr in ['x', 'pos', 'edge_index', 'y']):
-             raise ValueError("El objeto de grafo debe contener 'x', 'pos', 'edge_index' y 'y' (etiquetas de epítopo).")
+        if self.graph is None or not all(attr in self.graph for attr in ['node_attrs', 'coords', 'edge_index', 'y']):
+             raise ValueError("El objeto de grafo debe contener 'node_attrs', 'coords', 'edge_index' y 'y' (etiquetas de epítopo).")
 
         # Graph PyG -> NetworkX to visualize
-        g_nx = to_networkx(self.graph, node_attrs=['pos'])
-        pos_3d = nx.get_node_attributes(g_nx, 'pos')
+        g_nx = to_networkx(self.graph, node_attrs=['coords'])
+        pos_3d = nx.get_node_attributes(g_nx, 'coords')
 
         # Colors and legend setup
         fig = plt.figure(figsize=(10, 8))

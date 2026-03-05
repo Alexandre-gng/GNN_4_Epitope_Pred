@@ -54,13 +54,13 @@ def apply_knn_to_graphs(data_list, k, include_self=False, device=None):
     
     for data in data_list:
         # Récupérer les positions 3D et les déplacer sur le device
-        if torch.is_tensor(data.pos):
-            pos = data.pos.to(device)
+        if torch.is_tensor(data.coords):
+            coords = data.coords.to(device)
         else:
-            pos = torch.tensor(data.pos, dtype=torch.float32, device=device)
+            coords = torch.tensor(data.coords, dtype=torch.float32, device=device)
         
         # Calculer la matrice de distances avec torch.cdist sur le GPU/CPU
-        distances = torch.cdist(pos, pos)  # Shape: [num_nodes, num_nodes]
+        distances = torch.cdist(coords, coords)  # Shape: [num_nodes, num_nodes]
         
         # Obtenir les K voisins les plus proches (+ 1 pour inclure le nœud lui-même)
         k_neighbors = k + 1
@@ -94,17 +94,21 @@ def apply_knn_to_graphs(data_list, k, include_self=False, device=None):
         
         # S'assurer que tous les attributs sont sur CPU pour la cohérence
         # Le DataLoader s'occupera de les transférer vers le device approprié
-        x_cpu = data.x.cpu() if torch.is_tensor(data.x) else data.x
+        node_attrs_cpu = data.node_attrs.cpu() if torch.is_tensor(data.node_attrs) else data.node_attrs
         y_cpu = data.y.cpu() if torch.is_tensor(data.y) else data.y
-        pos_cpu = data.pos.cpu() if torch.is_tensor(data.pos) else data.pos
+        coords_cpu = data.coords.cpu() if torch.is_tensor(data.coords) else data.coords
+        
+        # Determine num_nodes from node_attrs
+        num_nodes = data.num_nodes
         
         # Créer une nouvelle structure Data avec les nouveaux edges
         new_data = Data(
-            x=x_cpu,
+            node_attrs=node_attrs_cpu,
             edge_index=edge_index,
             edge_attr=edge_attr,
             y=y_cpu,
-            pos=pos_cpu,
+            coords=coords_cpu,
+            num_nodes=num_nodes,
             rsa=data.rsa if hasattr(data, 'rsa') else None,
             name=data.name if hasattr(data, 'name') else None
         )
@@ -113,22 +117,6 @@ def apply_knn_to_graphs(data_list, k, include_self=False, device=None):
     
     return knn_data_list
 
-
-def apply_knn_to_single_graph(data, k, include_self=False, device=None):
-    """
-    Applique KNN à une seule structure Data.
-    
-    Args:
-        data: Structure Data (PyTorch Geometric)
-        k (int): Nombre de voisins les plus proches à considérer
-        include_self (bool): Si True, inclut le nœud lui-même dans les voisins (default: False)
-        device: torch.device ou str ('cuda' ou 'cpu'). Si None, détecte automatiquement
-    
-    Returns:
-        Structure Data avec edge_index et edge_attr recompilés selon KNN
-    """
-    
-    return apply_knn_to_graphs([data], k, include_self, device)[0]
 
 
 # Exemple d'utilisation
