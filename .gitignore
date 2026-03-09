@@ -25,7 +25,6 @@ __pycache__/
 *.pt
 *.pth
 *.db
-*.txt
 *.gitignore
 *.csv
 *.pkl
@@ -34,3 +33,4 @@ __pycache__/
 *.env
 
 .gitignore
+.gitattributes
