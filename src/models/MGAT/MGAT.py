@@ -22,7 +22,7 @@ from torch_geometric.nn import GATv2Conv
 
 
 class MultiView_GAT(nn.Module):
-    def __init__(self, in_channels, hidden_channels, out_channels, num_layers, num_views, reg_lambda: float = 4e-3, heads=1, edge_dim=1, dropout=0.6):
+    def __init__(self, in_channels, hidden_channels, out_channels, num_layers, num_views, reg_lambda: float = 0, heads=1, edge_dim=1, dropout=0.6):
         """
         Args:
             in_channels (int): Dimension des features d'entrée (F).

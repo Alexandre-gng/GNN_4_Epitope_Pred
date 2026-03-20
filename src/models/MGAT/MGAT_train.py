@@ -55,7 +55,8 @@ config = TrainingConfig(
     num_layers=3,
     dropout=0.1,
     edge_dim=None,
-    reg_lambda = 0.005,
+    reg_lambda = 0,
+    # reg_lambda = 0.005,
     patience = 10,
     alpha = 0.25,
     gamma = 2.0,
@@ -76,10 +77,10 @@ print(f"len(train_loader.dataset), len(val_loader.dataset), len(blind_test_loade
 # ====== Models versions to test ======
 model_configs = [
     # name - train dataset - val dataset - test dataset - edge_dim - focal_loss - embedding_type
-    ("MGAT1", train_loader, val_loader, blind_test_loader, 1, True,"ESM2+ESMIF1"),
-    ("MGAT2", train_loader, val_loader, blind_test_loader, 1, False,"ESM2+ESMIF1"),
-    ("MGAT3", train_loader, val_loader, blind_test_loader, None, True,"ESM2+ESMIF1"),
-    ("MGAT4", train_loader, val_loader, blind_test_loader, None, False,"ESM2+ESMIF1"),
+    ("MGAT1_simpleReg", train_loader, val_loader, blind_test_loader, 1, True,"ESM2+ESMIF1"),
+    ("MGAT2_simpleReg", train_loader, val_loader, blind_test_loader, 1, False,"ESM2+ESMIF1"),
+    ("MGAT3_simpleReg", train_loader, val_loader, blind_test_loader, None, True,"ESM2+ESMIF1"),
+    ("MGAT4_simpleReg", train_loader, val_loader, blind_test_loader, None, False,"ESM2+ESMIF1"),
 ]
 
 
