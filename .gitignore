@@ -14,6 +14,10 @@ src/models/trained_model
 src/feature_generation/adapt_original_ds/
 src/data/
 
+
+latex/
+
+
 config
 venv
 

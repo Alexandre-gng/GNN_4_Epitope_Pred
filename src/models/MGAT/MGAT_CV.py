@@ -265,6 +265,19 @@ def cross_validate_mgat(
             }
         }
         fold_results.append(fold_result)
+
+        # Running uncertainty info for AUC-PR across completed folds (SEM)
+        running_val_auc_pr = [f['validation']['auc_pr'] for f in fold_results]
+        running_test_auc_pr = [f['blind_test']['auc_pr'] for f in fold_results]
+        if len(running_val_auc_pr) > 1:
+            running_val_auc_pr_sem = float(np.std(running_val_auc_pr, ddof=1) / np.sqrt(len(running_val_auc_pr)))
+            running_test_auc_pr_sem = float(np.std(running_test_auc_pr, ddof=1) / np.sqrt(len(running_test_auc_pr)))
+            print(
+                f"  Running AUC-PR SEM after fold {fold_idx + 1}: "
+                f"Val={running_val_auc_pr_sem:.4f}, Blind Test={running_test_auc_pr_sem:.4f}"
+            )
+        else:
+            print(f"  Running AUC-PR SEM after fold {fold_idx + 1}: Val=N/A, Blind Test=N/A")
         
         # Save fold checkpoint
         checkpoint = {
@@ -341,39 +354,48 @@ def cross_validate_mgat(
         raise ValueError("No fold results collected. All folds may have failed.")
     
     # Aggregate fold metrics
+    def _mean(key_path):
+        return np.mean([f[key_path[0]][key_path[1]] for f in fold_results])
+
     avg_val_metrics = {
-        'loss': np.mean([f['validation']['loss'] for f in fold_results]),
-        'auc_pr': np.mean([f['validation']['auc_pr'] for f in fold_results]),
-        'auc_roc': np.mean([f['validation']['auc_roc'] for f in fold_results]),
-        'mcc': np.mean([f['validation']['mcc'] for f in fold_results]),
-        'f1': np.mean([f['validation']['f1'] for f in fold_results]),
-        'accuracy': np.mean([f['validation']['accuracy'] for f in fold_results])
+        k: float(_mean(('validation', k)))
+        for k in ('loss', 'auc_pr', 'auc_roc', 'mcc', 'f1', 'accuracy')
     }
-    
     avg_test_metrics = {
-        'loss': np.mean([f['blind_test']['loss'] for f in fold_results]),
-        'auc_pr': np.mean([f['blind_test']['auc_pr'] for f in fold_results]),
-        'auc_roc': np.mean([f['blind_test']['auc_roc'] for f in fold_results]),
-        'mcc': np.mean([f['blind_test']['mcc'] for f in fold_results]),
-        'f1': np.mean([f['blind_test']['f1'] for f in fold_results]),
-        'accuracy': np.mean([f['blind_test']['accuracy'] for f in fold_results])
+        k: float(_mean(('blind_test', k)))
+        for k in ('loss', 'auc_pr', 'auc_roc', 'mcc', 'f1', 'accuracy')
+    }
+
+    def _sem(key_path):
+        values = [f[key_path[0]][key_path[1]] for f in fold_results]
+        if len(values) < 2:
+            return 0.0
+        return np.std(values, ddof=1) / np.sqrt(len(values))
+
+    sem_val_metrics = {
+        k: float(_sem(('validation', k)))
+        for k in ('loss', 'auc_pr', 'auc_roc', 'mcc', 'f1', 'accuracy')
+    }
+    sem_test_metrics = {
+        k: float(_sem(('blind_test', k)))
+        for k in ('loss', 'auc_pr', 'auc_roc', 'mcc', 'f1', 'accuracy')
     }
     
     print(f"\nAverage Validation Metrics across folds:")
-    print(f"  Loss: {avg_val_metrics['loss']:.4f}")
-    print(f"  AUC-PR: {avg_val_metrics['auc_pr']:.4f}")
-    print(f"  AUC-ROC: {avg_val_metrics['auc_roc']:.4f}")
-    print(f"  MCC: {avg_val_metrics['mcc']:.4f}")
-    print(f"  F1: {avg_val_metrics['f1']:.4f}")
-    print(f"  Accuracy: {avg_val_metrics['accuracy']:.4f}")
+    for k, v in avg_val_metrics.items():
+        print(f"  {k:>10s}: {v:.4f}")
+
+    print(f"\nValidation Metrics SEM across folds:")
+    for k, v in sem_val_metrics.items():
+        print(f"  {k:>10s}: {v:.4f}")
     
     print(f"\nAverage Blind Test Metrics across folds:")
-    print(f"  Loss: {avg_test_metrics['loss']:.4f}")
-    print(f"  AUC-PR: {avg_test_metrics['auc_pr']:.4f}")
-    print(f"  AUC-ROC: {avg_test_metrics['auc_roc']:.4f}")
-    print(f"  MCC: {avg_test_metrics['mcc']:.4f}")
-    print(f"  F1: {avg_test_metrics['f1']:.4f}")
-    print(f"  Accuracy: {avg_test_metrics['accuracy']:.4f}")
+    for k, v in avg_test_metrics.items():
+        print(f"  {k:>10s}: {v:.4f}")
+
+    print(f"\nBlind Test Metrics SEM across folds:")
+    for k, v in sem_test_metrics.items():
+        print(f"  {k:>10s}: {v:.4f}")
     
     # Save OOF metrics
     oof_metrics = {
@@ -387,8 +409,10 @@ def cross_validate_mgat(
             'f1': float(oof_f1),
             'accuracy': float(oof_acc)
         },
-        'average_validation_metrics': {k: float(v) for k, v in avg_val_metrics.items()},
-        'average_blind_test_metrics': {k: float(v) for k, v in avg_test_metrics.items()},
+        'average_validation_metrics': avg_val_metrics,
+        'sem_validation_metrics': sem_val_metrics,
+        'average_blind_test_metrics': avg_test_metrics,
+        'sem_blind_test_metrics': sem_test_metrics,
         'fold_results': fold_results,
         'config': asdict(config)
     }
