@@ -1,6 +1,6 @@
 ﻿# Comparative Study of GNNs for Conformational B-Cell Epitope Prediction
 
-Technical report: [link](https://github.com/Alexandre-gng/GNN_4_Epitope_Pred/blob/ba4c70d1415e12714034a294450208c8c79c42d4/Study_of_4_GNNs_models_for_Conformational_Epitope_Pred.pdf)
+Technical report: [link](https://github.com/Alexandre-gng/GNN_4_Epitope_Pred/blob/main/Study_of_4_GNNs_models_for_Conformational_Epitope_Pred.pdf)
 
 This repository presents a comparative study of four Graph Neural Network (GNN) architectures for predicting conformational epitopes in proteins. The goal is to evaluate, under a consistent experimental setup, which approaches generalize best on Epitope3D.
 
